@@ -22,7 +22,7 @@ func main() {
 
 	err := loadConfig()
 	if err != nil {
-		fmt.Println(err.error())
+		fmt.Println(err.Error())
 	}
 
 	discord, err := discordgo.New("Bot " + config.token)

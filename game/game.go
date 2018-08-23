@@ -51,6 +51,19 @@ func (g *Game) Play(player string, char rune) error {
 
 	}
 
+	if g.cleared() {
+
+	}
+
+}
+
+func (g *Game) cleared() bool {
+	for _, m := range g.mask {
+		if m {
+			return false
+		}
+	}
+	return true
 }
 
 func (g *Game) test(char rune) bool {

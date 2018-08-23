@@ -7,4 +7,12 @@ type Event interface {
 type EndEvent struct {
 }
 
+type WrongEvent struct {
+	Player string
+}
+
+type RightEvent struct {
+	Player string
+}
+
 func (EndEvent) sealed() {}
