@@ -5,14 +5,26 @@ type Event interface {
 }
 
 type EndEvent struct {
-}
-
-type WrongEvent struct {
-	Player string
-}
-
-type RightEvent struct {
-	Player string
+	Win bool
 }
 
 func (EndEvent) sealed() {}
+
+type TurnEvent struct {
+	Right  bool
+	Player string
+}
+
+func (TurnEvent) sealed() {}
+
+type HintEvent struct {
+	Hint string
+}
+
+func (HintEvent) sealed() {}
+
+type RevealEvent struct {
+	Char rune
+}
+
+func (RevealEvent) sealed() {}
