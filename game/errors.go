@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	ErrYouCreator = errors.New("sdbx/hang-man-bot/game you are the creator")
+	ErrYouCreator   = errors.New("sdbx/hang-man-bot/game you are the creator")
+	ErrAlreadyInput = errors.New("sdbx/hang-man-bot/game already inputed value")
 )
 
 type CoolError struct {

@@ -3,10 +3,13 @@ package display
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/sdbx/hang-man-bot/config"
 )
 
 var (
@@ -19,11 +22,19 @@ type Man []string
 
 var mans map[int][]Man
 
-func PickID(maxhp int) int {
+func InitMans() {
+	mans = make(map[int][]Man)
+	err := initMans()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func PickManID(maxhp int) int {
 	return rand.Intn(len(mans[maxhp]))
 }
 
-func GetPicture(maxhp int, id int, hp int) string {
+func GetManImage(maxhp int, id int, hp int) string {
 	if maxhp < 0 {
 		return ""
 	}
@@ -43,10 +54,6 @@ func GetPicture(maxhp int, id int, hp int) string {
 	return mans[maxhp][id][hp]
 }
 
-func init() {
-	mans = make(map[int][]Man)
-}
-
 func addMan(maxhp int, man Man) {
 	if _, ok := mans[maxhp]; !ok {
 		mans[maxhp] = []Man{}
@@ -54,11 +61,11 @@ func addMan(maxhp int, man Man) {
 	mans[maxhp] = append(mans[maxhp], man)
 }
 
-func InitMans(root string) error {
-
+func initMans() error {
 	// [id][maxhp][]path
 	assets := make(map[int]map[int][]string)
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	log.Println("probing " + config.Conf.MansDir)
+	err := filepath.Walk(config.Conf.MansDir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -90,13 +97,14 @@ func InitMans(root string) error {
 		return err
 	}
 
-	for _, mans := range assets {
+	for id, mans := range assets {
 		for maxhp, man := range mans {
 			m := make(Man, 0, maxhp)
-			for _, picture := range man {
+			for hp, picture := range man {
 				if picture == "" {
 					return ErrMissing
 				}
+				log.Printf("adding man id:%d maxhp:%d hp:%d\n", id, maxhp, hp)
 				m = append(m, picture)
 			}
 			addMan(maxhp, m)

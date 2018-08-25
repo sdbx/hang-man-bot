@@ -2,6 +2,7 @@ package utils
 
 import (
 	"strconv"
+	"time"
 	"unicode"
 )
 
@@ -52,6 +53,10 @@ func MakeSpace(rs []rune) string {
 	return str[1:]
 }
 
-func CreateURL(base string, maxhp int, id int, hp int) string {
-	return base + "/img/" + strconv.Itoa(maxhp) + "/" + strconv.Itoa(id) + "/" + strconv.Itoa(hp)
+func CreateManURL(base string, maxhp int, id int, hp int, ext string) string {
+	return base + "/man/" + strconv.Itoa(maxhp) + "/" + strconv.Itoa(id) + "/" + strconv.Itoa(hp) + ext
+}
+
+func IntToSeconds(n int) time.Duration {
+	return time.Duration(n) * time.Second
 }

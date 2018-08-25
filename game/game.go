@@ -20,6 +20,13 @@ func (a runes) Contains(r rune) bool {
 	return false
 }
 
+type GameMeta struct {
+	Creator  string
+	Hint     string
+	Korean   bool
+	Solution []rune
+}
+
 type Game struct {
 	mu sync.RWMutex
 
@@ -80,20 +87,32 @@ func (g *Game) Play(player string, char rune) error {
 		return ErrYouCreator
 	}
 
+	if g.log.Contains(char) || runes(g.current()).Contains(char) {
+		return ErrAlreadyInput
+	}
+
 	g.resetAllCool()
 	g.setCool(player, g.cool)
 
 	if g.reveal(char) {
 		g.sendEvent(&TurnEvent{
-			Right:  true,
-			Player: player,
+			Right:   true,
+			Char:    char,
+			Player:  player,
+			Current: g.current(),
+			Log:     g.log,
+			Hp:      g.hp,
 		})
 	} else {
 		g.addLog(char)
-		g.reduceHp(1)
+		g.reduceHp()
 		g.sendEvent(&TurnEvent{
-			Right:  false,
-			Player: player,
+			Right:   false,
+			Char:    char,
+			Player:  player,
+			Current: g.current(),
+			Log:     g.log,
+			Hp:      g.hp,
 		})
 	}
 
@@ -110,8 +129,16 @@ func (g *Game) Play(player string, char rune) error {
 	return nil
 }
 
-func (g *Game) reduceHp(hp int) {
-	g.hp -= hp
+func (g *Game) reduceHp() {
+	g.hp--
+	if g.hp == int(g.maxHp/2) {
+		g.sendEvent(&HintEvent{
+			Hint: g.hint,
+		})
+	}
+}
+
+func (g *Game) randomReveal() {
 }
 
 func (g *Game) sendEvent(e Event) {
@@ -119,10 +146,7 @@ func (g *Game) sendEvent(e Event) {
 		if ev == nil {
 			continue
 		}
-		ev2 := ev
-		go func() {
-			ev2 <- e
-		}()
+		ev <- e
 	}
 }
 

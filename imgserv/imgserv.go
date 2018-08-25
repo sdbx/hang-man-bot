@@ -1,6 +1,7 @@
 package imgserv
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,14 +13,14 @@ import (
 func Start() {
 	go func() {
 		r := chi.NewRouter()
-		r.Get("/img/{maxhp}/{id}/{hp}", getImage)
+		r.Get("/man/{maxhp}/{id}/{hp}", getMan)
 		if err := http.ListenAndServe(":8053", r); err != nil {
 			panic(err)
 		}
 	}()
 }
 
-func getImage(w http.ResponseWriter, r *http.Request) {
+func getMan(w http.ResponseWriter, r *http.Request) {
 	maxhp_ := chi.URLParam(r, "maxhp")
 	id_ := chi.URLParam(r, "id")
 	hp_ := chi.URLParam(r, "hp")
@@ -36,12 +37,9 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hp, err := strconv.Atoi(hp_)
-	if err != nil {
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
+	var hp int
+	fmt.Sscanf(hp_, "%d", &hp)
 
-	p := display.GetPicture(maxhp, id, hp)
+	p := display.GetManImage(maxhp, id, hp)
 	http.ServeFile(w, r, p)
 }

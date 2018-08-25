@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,14 +18,17 @@ var mol *mole.Mole
 func main() {
 	err := config.Load()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
+
+	display.InitMans()
+	imgserv.Start()
 
 	discord, err := discordgo.New("Bot " + config.Conf.Token)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
@@ -33,19 +36,11 @@ func main() {
 
 	err = discord.Open()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
-	err = display.InitMans(config.Conf.AssetsDir)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	imgserv.Start()
-
-	mol = mole.New(discord)
+	mol = mole.New(discord, config.Conf.ChannelID, config.Conf.LogChannelID)
 	go mol.Start()
 
 	sc := make(chan os.Signal, 1)

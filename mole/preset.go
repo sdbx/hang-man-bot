@@ -1,6 +1,7 @@
 package mole
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/sdbx/hang-man-bot/utils"
@@ -20,6 +21,7 @@ func addPreset(str string, hint string) {
 	}
 
 	kor := utils.IsKorean(str)
+	log.Printf("preset added str: %s hint: %s kor: %b\n", str, hint, kor)
 	presets = append(presets, preset{
 		str:  str,
 		hint: hint,
