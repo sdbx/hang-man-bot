@@ -1,9 +1,12 @@
 package game
 
 import (
+	"log"
 	"sort"
-	"sync"
 	"time"
+
+	uuid "github.com/odeke-em/go-uuid"
+	"github.com/sdbx/hang-man-bot/utils"
 )
 
 type runes []rune
@@ -28,7 +31,7 @@ type GameMeta struct {
 }
 
 type Game struct {
-	mu sync.RWMutex
+	mu utils.LogLock
 
 	creator string
 	hint    string
@@ -73,54 +76,82 @@ func createMask(n int) []bool {
 }
 
 func (g *Game) Play(player string, char rune) error {
-	g.mu.Lock()
-	defer g.mu.Unlock()
+	if player == g.creator {
+		return ErrYouCreator
+	}
 
-	if r, yes := g.isCool(player); yes {
+	g.mu.RLock()
+	r, yes := g.isCool(player)
+	l := g.log
+	current := runes(g.current())
+	hp := g.hp
+	g.mu.RUnlock()
+
+	if hp <= 0 {
+		return ErrEnded
+	}
+
+	if yes {
 		return &CoolError{
 			Player: player,
 			Remain: r,
 		}
 	}
 
-	if player == g.creator {
-		return ErrYouCreator
-	}
-
-	if g.log.Contains(char) || runes(g.current()).Contains(char) {
+	if l.Contains(char) || current.Contains(char) {
 		return ErrAlreadyInput
 	}
 
+	g.mu.Lock()
+
 	g.resetAllCool()
 	g.setCool(player, g.cool)
+	rv := g.reveal(char)
+	if !rv {
+		g.addLog(char)
+		g.hp--
+	}
 
-	if g.reveal(char) {
+	current = g.current()
+	l = g.log
+
+	hp = g.hp
+	cr := g.cleared()
+
+	g.mu.Unlock()
+
+	if rv {
 		g.sendEvent(&TurnEvent{
 			Right:   true,
 			Char:    char,
 			Player:  player,
-			Current: g.current(),
-			Log:     g.log,
-			Hp:      g.hp,
+			Current: current,
+			Log:     l,
+			Hp:      hp,
 		})
+
 	} else {
-		g.addLog(char)
-		g.reduceHp()
 		g.sendEvent(&TurnEvent{
 			Right:   false,
 			Char:    char,
 			Player:  player,
-			Current: g.current(),
-			Log:     g.log,
-			Hp:      g.hp,
+			Current: current,
+			Log:     l,
+			Hp:      hp,
 		})
 	}
 
-	if g.hp <= 0 {
+	if hp == int(g.maxHp/2) {
+		g.sendEvent(&HintEvent{
+			Hint: g.hint,
+		})
+	}
+
+	if hp <= 0 {
 		g.sendEvent(&EndEvent{
 			Win: false,
 		})
-	} else if g.cleared() {
+	} else if cr {
 		g.sendEvent(&EndEvent{
 			Win: true,
 		})
@@ -129,24 +160,14 @@ func (g *Game) Play(player string, char rune) error {
 	return nil
 }
 
-func (g *Game) reduceHp() {
-	g.hp--
-	if g.hp == int(g.maxHp/2) {
-		g.sendEvent(&HintEvent{
-			Hint: g.hint,
-		})
-	}
-}
-
-func (g *Game) randomReveal() {
-}
-
 func (g *Game) sendEvent(e Event) {
 	for _, ev := range g.evs {
 		if ev == nil {
 			continue
 		}
+		log.Println(uuid.New(), "event send")
 		ev <- e
+		log.Println(uuid.New(), "event sent")
 	}
 }
 

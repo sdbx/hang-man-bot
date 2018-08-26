@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/profile"
 	"github.com/sdbx/hang-man-bot/config"
 	"github.com/sdbx/hang-man-bot/display"
 	"github.com/sdbx/hang-man-bot/imgserv"
@@ -16,6 +17,8 @@ import (
 var mol *mole.Mole
 
 func main() {
+	defer profile.Start(profile.CPUProfile).Stop()
+
 	err := config.Load()
 	if err != nil {
 		log.Println(err)

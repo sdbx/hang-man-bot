@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/sdbx/hang-man-bot/config"
@@ -33,7 +32,7 @@ type moleGame struct {
 }
 
 type Mole struct {
-	mu           sync.RWMutex
+	mu           utils.LogLock
 	msgID        string
 	channelID    string
 	logChannelID string
@@ -256,6 +255,7 @@ func (m *Mole) HandleGame() {
 		case e := <-c:
 			end := m.handleEvent(e)
 			if end {
+				log.Println("ENDDDDDDDDDDD")
 				return
 			}
 		}
